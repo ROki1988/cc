@@ -33,11 +33,15 @@ typedef struct Node
 } Node;
 
 Token tokens[100];
+Node *code[100];
 int pos = 0;
 
 Node *expr();
 Node *mul();
 Node *term();
+Node *assign();
+Node *assign_();
+void program();
 
 void tokenize(char *p)
 {
@@ -115,25 +119,14 @@ void error(char *format, int i)
     exit(1);
 }
 
-Node *number()
-{
-    if (tokens[pos].ty == TK_NUM)
-    {
-        return new_node_num(tokens[pos++].val);
-    }
-    else
-    {
-        error("数値でないトークンです: %s\n", pos);
-    }
-}
-
 Node *term()
 {
     if (tokens[pos].ty == TK_NUM)
     {
         return new_node_num(tokens[pos++].val);
     }
-    else if (tokens[pos].ty == TK_IDENT) {
+    else if (tokens[pos].ty == TK_IDENT)
+    {
         return new_node_ident(tokens[pos++].input);
     }
     else if (tokens[pos].ty == '(')
@@ -141,13 +134,13 @@ Node *term()
         pos++;
         Node *node = expr();
         if (tokens[pos].ty != ')')
-            error("開きカッコに対応する閉じカッコがありません: %s\n", pos);
+            error("開きカッコに対応する閉じカッコがありません: '%s'\n", pos);
         pos++;
         return node;
     }
     else
     {
-        error("数値でも開きカッコでもないトークンです: %s\n", pos);
+        error("数値でも開きカッコでもないトークンです: '%s'\n", pos);
     }
 }
 
@@ -199,6 +192,19 @@ Node *expr()
     }
 }
 
+Node *assign_()
+{
+    if (tokens[pos].ty == '=')
+    {
+        pos++;
+        Node *lhs = expr();
+        return new_node('=', lhs, assign_());
+    }
+    else {
+        return NULL;
+    }
+}
+
 Node *assign()
 {
     Node *lhs = expr();
@@ -207,22 +213,74 @@ Node *assign()
     {
         return lhs;
     }
-    else if (tokens[pos].ty == '=') {
-        pos++;
-        Node *node = assign();
+    else
+    {
+        Node *node = assign_();
         if (tokens[pos].ty != ';')
-            error("終端の ; がありません: %s\n", pos);
-        return new_node('=', lhs, node);
+            error("終端の ; がありません: '%s'\n", pos);
+        pos++;
+        return new_node(NULL, lhs, node);
     }
+}
+
+void program()
+{
+    int i = 0;
+    while (tokens[pos].ty != TK_EOF)
+    {
+        code[i++] = assign();
+    }
+    code[i] = NULL;
+    return;
+}
+
+void gen_lval(Node *node) {
+    if (node->op == ND_IDENT) {
+        printf("  mov rax, rbp\n");
+        printf("  sub rax, %d\n", ('z' - node->name +1) * 8);
+        printf("  push rax\n");
+        return;
+    }
+    else {
+        exit(2);
+    }
+    
 }
 
 void gen(Node *node)
 {
+    if (node == NULL)
+    {
+        return;
+    }
+
     if (node->op == ND_NUM)
     {
         printf("  push %d\n", node->val);
         return;
     }
+
+    
+    if (node->op == ND_IDENT) {
+        gen_lval(node);
+        printf("  pop rax\n");
+        printf("  mov rax, [rax]\n");
+        printf("  push rax\n");
+        return;
+    }
+
+     
+     if (node->op == '=') {
+        gen_lval(node->lhs);
+        gen(node->rhs);
+
+        printf("  pop rdi\n");
+        printf("  pop rax\n");
+        printf("  mov [rax], rdi\n");
+        printf("  push rdi\n");
+        return;
+     }
+     
 
     gen(node->lhs);
     gen(node->rhs);
@@ -261,15 +319,24 @@ int main(int argc, char const *argv[])
 
     tokenize(argv[1]);
 
-    Node *node = assign();
+    program();
 
     printf(".intel_syntax noprefix\n");
     printf(".global main\n");
     printf("main:\n");
 
-    gen(node);
+    printf("  push rbp\n");
+    printf("  mov rbp, rsp\n");
+    printf("  sub rsp, 208\n");
+    
+    for(size_t i = 0; code[i]; i++)
+    {
+        gen(code[i]);
+        printf("  pop rax\n");
+    }
 
-    printf("  pop rax\n");
+    printf("  mov rsp, rbp\n");
+    printf("  pop rbp\n");   
     printf("  ret\n");
     return 0;
 }
