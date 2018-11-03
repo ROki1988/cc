@@ -29,6 +29,7 @@ int main(int argc, char const *argv[])
         }
         else {
             fprintf(stderr, "予期せぬ文字です: '%c'\n", *p);
+            return 1;
         }
     }
         
