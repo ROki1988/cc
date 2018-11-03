@@ -332,10 +332,11 @@ int main(int argc, char const *argv[])
     for(size_t i = 0; code[i]; i++)
     {
         gen(code[i]);
+        printf("  pop rax\n");
     }
 
     printf("  mov rsp, rbp\n");
-    printf("  pop rbp\n");
+    printf("  pop rbp\n");   
     printf("  ret\n");
     return 0;
 }
