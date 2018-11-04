@@ -213,25 +213,6 @@ Node *assign()
 
         return r;
     }
-    
-    Node *node = assign_();
-    if (tokens[pos].ty != ';')
-        error("終端の ; がありません: '%s'\n", pos);
-    pos++;
-    return new_node('=', lhs, node);
-
-    if (tokens[pos].ty == TK_EOF)
-    {
-        return lhs;
-    }
-    else
-    {
-        Node *node = assign_();
-        if (tokens[pos].ty != ';')
-            error("終端の ; がありません: '%s'\n", pos);
-        pos++;
-        return new_node('=', lhs, node);
-    }
 }
 
 void program()
