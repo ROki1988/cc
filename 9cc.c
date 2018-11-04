@@ -140,7 +140,7 @@ Node *term()
     }
     else
     {
-        return NULL;
+        error("数値でも開きカッコでもないトークンです: '%s'\n", pos);
     }
 }
 
