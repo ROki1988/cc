@@ -140,7 +140,7 @@ Node *term()
     }
     else
     {
-        error("数値でも開きカッコでもないトークンです: '%s'\n", pos);
+        return NULL;
     }
 }
 
@@ -192,22 +192,33 @@ Node *expr()
     }
 }
 
-Node *assign_()
-{
-    if (tokens[pos].ty == '=')
-    {
-        pos++;
-        Node *lhs = expr();
-        return new_node('=', lhs, assign_());
-    }
-    else {
-        return NULL;
-    }
-}
-
 Node *assign()
 {
     Node *lhs = expr();
+
+    if (tokens[pos].ty == TK_EOF) {
+        return lhs;
+    }
+    else {
+        Node *r = NULL;
+        if (tokens[pos].ty == '=') {
+            pos++;
+            r =  new_node('=', lhs, assign());
+        }
+        else {
+            r = lhs;
+        }
+
+        if (tokens[pos].ty == ';') pos++;
+
+        return r;
+    }
+    
+    Node *node = assign_();
+    if (tokens[pos].ty != ';')
+        error("終端の ; がありません: '%s'\n", pos);
+    pos++;
+    return new_node('=', lhs, node);
 
     if (tokens[pos].ty == TK_EOF)
     {
@@ -219,7 +230,7 @@ Node *assign()
         if (tokens[pos].ty != ';')
             error("終端の ; がありません: '%s'\n", pos);
         pos++;
-        return new_node(NULL, lhs, node);
+        return new_node('=', lhs, node);
     }
 }
 
@@ -228,7 +239,8 @@ void program()
     int i = 0;
     while (tokens[pos].ty != TK_EOF)
     {
-        code[i++] = assign();
+        code[i] = assign();
+        i++;
     }
     code[i] = NULL;
     return;
@@ -237,7 +249,7 @@ void program()
 void gen_lval(Node *node) {
     if (node->op == ND_IDENT) {
         printf("  mov rax, rbp\n");
-        printf("  sub rax, %d\n", ('z' - node->name +1) * 8);
+        printf("  sub rax, %d\n", ('z' - node->name + 1) * 8);
         printf("  push rax\n");
         return;
     }
@@ -249,11 +261,6 @@ void gen_lval(Node *node) {
 
 void gen(Node *node)
 {
-    if (node == NULL)
-    {
-        return;
-    }
-
     if (node->op == ND_NUM)
     {
         printf("  push %d\n", node->val);
