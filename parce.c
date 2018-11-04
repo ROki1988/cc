@@ -163,20 +163,25 @@ Node *assign()
 {
     Node *lhs = expr();
 
-    if (tokens[pos].ty == TK_EOF) {
+    if (tokens[pos].ty == TK_EOF)
+    {
         return lhs;
     }
-    else {
+    else
+    {
         Node *r = NULL;
-        if (tokens[pos].ty == '=') {
+        if (tokens[pos].ty == '=')
+        {
             pos++;
-            r =  new_node('=', lhs, assign());
+            r = new_node('=', lhs, assign());
         }
-        else {
+        else
+        {
             r = lhs;
         }
 
-        if (tokens[pos].ty == ';') pos++;
+        if (tokens[pos].ty == ';')
+            pos++;
 
         return r;
     }

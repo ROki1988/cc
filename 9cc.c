@@ -9,7 +9,8 @@ int main(int argc, char const *argv[])
         return 1;
     }
 
-    if (strcmp(argv[1], "-test") == 0) {
+    if (strcmp(argv[1], "-test") == 0)
+    {
         runtest();
         return 0;
     }
@@ -25,15 +26,15 @@ int main(int argc, char const *argv[])
     printf("  push rbp\n");
     printf("  mov rbp, rsp\n");
     printf("  sub rsp, 208\n");
-    
-    for(size_t i = 0; code[i]; i++)
+
+    for (size_t i = 0; code[i]; i++)
     {
         gen(code[i]);
         printf("  pop rax\n");
     }
 
     printf("  mov rsp, rbp\n");
-    printf("  pop rbp\n");   
+    printf("  pop rbp\n");
     printf("  ret\n");
     return 0;
 }

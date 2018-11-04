@@ -32,13 +32,15 @@ typedef struct Node
     char name;
 } Node;
 
-typedef struct {
+typedef struct
+{
     void **data;
     int capacity;
     int len;
 } Vector;
 
-typedef struct {
+typedef struct
+{
     Vector *keys;
     Vector *vals;
 } Map;
