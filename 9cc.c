@@ -9,6 +9,11 @@ int main(int argc, char const *argv[])
         return 1;
     }
 
+    if (strcmp(argv[1], "-test") == 0) {
+        runtest();
+        return 0;
+    }
+
     tokenize(argv[1]);
 
     program();
